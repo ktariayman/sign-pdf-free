@@ -547,6 +547,41 @@ input[type=file] {
   margin-bottom: 8px;
 }
 
+.qr-link-row {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+  align-items: center;
+}
+
+.qr-link-input {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f5f5f5;
+  color: #444;
+  outline: none;
+  min-width: 0;
+}
+
+.qr-copy-btn {
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f5f5f5;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.qr-copy-btn:hover {
+  background: #eee;
+}
+
 .qr-waiting {
   display: flex;
   flex-direction: column;

@@ -4,6 +4,7 @@ let phonePeer = null, phoneConn = null, phoneTimeout = null, phoneInitTimeout = 
 function openPhoneSign() {
   document.getElementById('qrContainer').style.display = '';
   document.getElementById('qrWaiting').style.display = 'none';
+  document.getElementById('qrLinkRow').style.display = 'none';
   document.querySelector('.qr-instructions').style.display = '';
   updateQrStatus('init', 'Initializing...');
   cleanupPhonePeer();
@@ -51,6 +52,9 @@ function startPhonePeer() {
         correctLevel: QRCode.CorrectLevel.M
       });
       updateQrStatus('waiting', 'Waiting for phone to scan...');
+      // Show copyable link
+      document.getElementById('qrLinkInput').value = mobileUrl;
+      document.getElementById('qrLinkRow').style.display = '';
     } catch (err) {
       updateQrStatus('error', 'Failed to generate QR code');
       console.error('QRCode error:', err);
@@ -133,4 +137,16 @@ function updateQrStatus(state, text) {
   const el = document.getElementById('qrStatus');
   el.querySelector('.qr-status-dot').className = 'qr-status-dot ' + state;
   el.querySelector('span').textContent = text;
+}
+
+function copyPhoneLink() {
+  const input = document.getElementById('qrLinkInput');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = document.querySelector('.qr-copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  }).catch(() => {
+    input.select();
+    document.execCommand('copy');
+  });
 }
