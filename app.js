@@ -63,7 +63,7 @@ async function renderPages() {
         placingSignature = null;
         document.body.style.cursor = '';
       } else if (placingText) {
-        placeItem(wrap, e, i, 'text', placingText);
+        placeItem(wrap, e, i, 'text', placingText.text, placingText.fontFamily);
         placingText = null;
         document.body.style.cursor = '';
       }
@@ -189,9 +189,25 @@ function removeSavedSig(idx) {
 }
 
 function useSavedSig(url) {
-  closePad();
-  placingSignature = url;
-  document.body.style.cursor = 'crosshair';
+  // Load saved sig onto canvas so user can recolor it
+  switchSigTab('draw');
+  const c = document.getElementById('sigCanvas');
+  const img = new Image();
+  img.onload = () => {
+    sigCtx.clearRect(0, 0, c.width, c.height);
+    const s = Math.min(c.width / img.width, c.height / img.height) * 0.8;
+    const w = img.width * s, h = img.height * s;
+    sigCtx.drawImage(img, (c.width - w) / 2, (c.height - h) / 2, w, h);
+    hasDrawn = true;
+    document.getElementById('sigPlaceholder').classList.add('hidden');
+    // Apply current selected color
+    sigCtx.save();
+    sigCtx.globalCompositeOperation = 'source-in';
+    sigCtx.fillStyle = sigColor;
+    sigCtx.fillRect(0, 0, c.width, c.height);
+    sigCtx.restore();
+  };
+  img.src = url;
 }
 
 function cropCanvas(c, ctx) {
@@ -239,6 +255,8 @@ let placingText = null;
 
 function addText() {
   document.getElementById('textInput').value = '';
+  document.getElementById('fontSelect').value = 'sans-serif';
+  previewFont();
   document.getElementById('textModal').classList.add('on');
   setTimeout(() => document.getElementById('textInput').focus(), 50);
 }
@@ -247,16 +265,21 @@ function closeTextModal() {
   document.getElementById('textModal').classList.remove('on');
 }
 
+function previewFont() {
+  document.getElementById('textInput').style.fontFamily = document.getElementById('fontSelect').value;
+}
+
 function confirmText() {
   const val = document.getElementById('textInput').value.trim();
   if (!val) return alert('Type something first');
+  const fontFamily = document.getElementById('fontSelect').value;
   closeTextModal();
-  placingText = val;
+  placingText = { text: val, fontFamily };
   document.body.style.cursor = 'crosshair';
 }
 
 // ---- Generic item placement ----
-function placeItem(wrap, e, pageNum, type, value) {
+function placeItem(wrap, e, pageNum, type, value, fontFamily) {
   const r = wrap.getBoundingClientRect();
   const x = e.clientX - r.left, y = e.clientY - r.top;
   if (type === 'sig') {
@@ -265,7 +288,7 @@ function placeItem(wrap, e, pageNum, type, value) {
     items.push(item);
     createItemEl(wrap, item, items.length - 1);
   } else {
-    const item = { type, pageNum, xPct: x / r.width, yPct: y / r.height, text: value, fontSize: 14 };
+    const item = { type, pageNum, xPct: x / r.width, yPct: y / r.height, text: value, fontSize: 14, fontFamily: fontFamily || 'sans-serif' };
     items.push(item);
     createItemEl(wrap, item, items.length - 1);
   }
@@ -297,6 +320,7 @@ function createItemEl(wrap, item, idx) {
     span.className = 'item-text';
     span.textContent = item.text;
     span.style.fontSize = (item.fontSize || 14) + 'px';
+    span.style.fontFamily = item.fontFamily || 'sans-serif';
     div.appendChild(span);
   }
 
@@ -369,6 +393,13 @@ function restoreItems() {
 }
 
 // ---- Download ----
+async function fetchGoogleFontBytes(family) {
+  const css = await fetch(`https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}`).then(r => r.text());
+  const match = css.match(/url\(([^)]+)\)/);
+  if (!match) return null;
+  return fetch(match[1]).then(r => r.arrayBuffer());
+}
+
 async function downloadPdf() {
   const active = items.filter(Boolean);
   if (!active.length) return alert('Add something first');
@@ -376,7 +407,41 @@ async function downloadPdf() {
   const { PDFDocument } = PDFLib;
   const pdf = await PDFDocument.load(pdfBytes);
   const pages = pdf.getPages();
-  const font = await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+
+  // Register fontkit for custom font embedding
+  pdf.registerFontkit(fontkit);
+
+  // Standard font map
+  const standardFontMap = {
+    'sans-serif': PDFLib.StandardFonts.Helvetica,
+    'serif': PDFLib.StandardFonts.TimesRoman,
+    'monospace': PDFLib.StandardFonts.Courier,
+  };
+
+  // Google font map (CSS value → Google Fonts family name)
+  const googleFontMap = {
+    "'Caveat', cursive": 'Caveat',
+  };
+
+  // Cache embedded fonts
+  const fontCache = {};
+  async function getFont(fontFamily) {
+    if (fontCache[fontFamily]) return fontCache[fontFamily];
+    if (standardFontMap[fontFamily]) {
+      fontCache[fontFamily] = await pdf.embedFont(standardFontMap[fontFamily]);
+    } else if (googleFontMap[fontFamily]) {
+      try {
+        const bytes = await fetchGoogleFontBytes(googleFontMap[fontFamily]);
+        if (bytes) {
+          fontCache[fontFamily] = await pdf.embedFont(bytes);
+        }
+      } catch (e) { /* fall through to fallback */ }
+    }
+    if (!fontCache[fontFamily]) {
+      fontCache[fontFamily] = await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+    }
+    return fontCache[fontFamily];
+  }
 
   for (const it of active) {
     const page = pages[it.pageNum - 1];
@@ -404,6 +469,7 @@ async function downloadPdf() {
       const sz = fontSize * rx;
       const x = it.xPct * canvasW * rx;
       const yTop = it.yPct * canvasH * ry;
+      const font = await getFont(it.fontFamily || 'sans-serif');
       page.drawText(it.text || '', { x, y: ph - yTop - sz * 0.82, size: sz, font, color: PDFLib.rgb(0, 0, 0) });
     }
   }

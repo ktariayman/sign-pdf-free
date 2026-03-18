@@ -6,6 +6,8 @@
 <title>Sign PDF</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Caveat&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -78,6 +80,15 @@
   <div class="modal">
     <h3>Add text</h3>
     <input type="text" id="textInput" class="text-input" placeholder="Type here..." onkeydown="if(event.key==='Enter')confirmText()">
+    <div class="font-row">
+      <span>Font:</span>
+      <select id="fontSelect" class="font-select" onchange="previewFont()">
+        <option value="sans-serif">Sans-serif</option>
+        <option value="serif">Serif</option>
+        <option value="monospace">Monospace</option>
+        <option value="'Caveat', cursive">Handwriting</option>
+      </select>
+    </div>
     <div class="actions">
       <button onclick="closeTextModal()">Cancel</button>
       <button class="accent" onclick="confirmText()">Place</button>
