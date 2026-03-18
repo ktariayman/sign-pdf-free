@@ -1,4 +1,13 @@
 // ==== QR Phone Signing ====
+const iceConfig = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+  ]
+};
 let phonePeer = null, phoneConn = null, phoneTimeout = null, phoneInitTimeout = null;
 
 function openPhoneSign() {
@@ -24,7 +33,7 @@ function startPhonePeer() {
   document.getElementById('qrContainer').innerHTML = '';
 
   try {
-    phonePeer = new Peer();
+    phonePeer = new Peer({ config: iceConfig });
   } catch (e) {
     updateQrStatus('error', 'Failed to create connection: ' + e.message);
     return;

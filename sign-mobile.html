@@ -326,6 +326,15 @@ body {
 const params = new URLSearchParams(window.location.search);
 const hostPeerId = params.get('peerId');
 
+const iceConfig = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+  ]
+};
 let peer = null, conn = null;
 let retries = 0;
 const MAX_RETRIES = 3;
@@ -338,12 +347,20 @@ if (!hostPeerId) {
 
 function connect() {
   setStatus('connecting', 'Connecting...');
-  peer = new Peer();
+  peer = new Peer({ config: iceConfig });
 
   peer.on('open', () => {
-    conn = peer.connect(hostPeerId, { reliable: true });
+    conn = peer.connect(hostPeerId);
+
+    // Timeout if data channel doesn't open
+    const connTimeout = setTimeout(() => {
+      if (!conn || !conn.open) {
+        setStatus('error', 'Could not connect. Ensure desktop modal is open and retry.');
+      }
+    }, 10000);
 
     conn.on('open', () => {
+      clearTimeout(connTimeout);
       retries = 0;
       setStatus('connected', 'Connected');
       updateSubmitBtn();
