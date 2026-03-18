@@ -111,7 +111,18 @@ function setSigColor(color, dot) {
   sigColor = color;
   document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
   dot.classList.add('active');
-  if (sigCtx) sigCtx.strokeStyle = color;
+  if (sigCtx) {
+    sigCtx.strokeStyle = color;
+    // Recolor existing drawing
+    const c = document.getElementById('sigCanvas');
+    if (hasDrawn) {
+      sigCtx.save();
+      sigCtx.globalCompositeOperation = 'source-in';
+      sigCtx.fillStyle = color;
+      sigCtx.fillRect(0, 0, c.width, c.height);
+      sigCtx.restore();
+    }
+  }
 }
 
 function clearPad() {
