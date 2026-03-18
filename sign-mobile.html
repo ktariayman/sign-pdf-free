@@ -326,13 +326,11 @@ body {
 const params = new URLSearchParams(window.location.search);
 const hostPeerId = params.get('peerId');
 
-const iceConfig = {
+const TURN_WORKER_URL = 'https://sign-paper.netlify.app/.netlify/functions/turn';
+let iceConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+    { urls: 'stun:stun1.l.google.com:19302' }
   ]
 };
 let peer = null, conn = null;
@@ -342,12 +340,23 @@ const MAX_RETRIES = 3;
 if (!hostPeerId) {
   showError('Invalid link. Please scan the QR code from the desktop app.');
 } else {
-  connect();
+  (async () => {
+    if (TURN_WORKER_URL) {
+      try {
+        const res = await fetch(TURN_WORKER_URL);
+        if (res.ok) {
+          const servers = await res.json();
+          if (Array.isArray(servers) && servers.length) iceConfig = { iceServers: servers };
+        }
+      } catch (e) {}
+    }
+    connect();
+  })();
 }
 
 function connect() {
   setStatus('connecting', 'Connecting...');
-  peer = new Peer({ config: iceConfig });
+  peer = new Peer({ config: iceConfig, debug: 0 });
 
   peer.on('open', () => {
     conn = peer.connect(hostPeerId);

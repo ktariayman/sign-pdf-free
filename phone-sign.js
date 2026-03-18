@@ -1,22 +1,38 @@
 // ==== QR Phone Signing ====
-const iceConfig = {
+const TURN_WORKER_URL = '/.netlify/functions/turn';
+
+let iceConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+    { urls: 'stun:stun1.l.google.com:19302' }
   ]
 };
+
+async function fetchTurnServers() {
+  if (!TURN_WORKER_URL) return;
+  try {
+    const res = await fetch(TURN_WORKER_URL);
+    if (res.ok) {
+      const servers = await res.json();
+      if (Array.isArray(servers) && servers.length) {
+        iceConfig = { iceServers: servers };
+      }
+    }
+  } catch (e) {
+    console.warn('Could not fetch TURN servers, using STUN only:', e);
+  }
+}
+
 let phonePeer = null, phoneConn = null, phoneTimeout = null, phoneInitTimeout = null;
 
-function openPhoneSign() {
+async function openPhoneSign() {
   document.getElementById('qrContainer').style.display = '';
   document.getElementById('qrWaiting').style.display = 'none';
   document.getElementById('qrLinkRow').style.display = 'none';
   document.querySelector('.qr-instructions').style.display = '';
   updateQrStatus('init', 'Initializing...');
   cleanupPhonePeer();
+  await fetchTurnServers();
   startPhonePeer();
 }
 
@@ -88,11 +104,11 @@ function startPhonePeer() {
 
     conn.on('data', raw => {
       let msg;
-      try { msg = JSON.parse(raw); } catch(e) { return; }
+      try { msg = JSON.parse(raw); } catch (e) { return; }
       if (msg.type !== 'signature' || !msg.dataUrl) return;
 
       // Send acknowledgment
-      try { conn.send(JSON.stringify({ type: 'ack' })); } catch(e) {}
+      try { conn.send(JSON.stringify({ type: 'ack' })); } catch (e) { }
 
       // Save to localStorage
       const sigs = JSON.parse(localStorage.getItem('saved_signatures') || '[]');
@@ -138,8 +154,8 @@ function cleanupPhonePeer() {
   clearTimeout(phoneInitTimeout);
   phoneTimeout = null;
   phoneInitTimeout = null;
-  if (phoneConn) { try { phoneConn.close(); } catch(e) {} phoneConn = null; }
-  if (phonePeer) { try { phonePeer.destroy(); } catch(e) {} phonePeer = null; }
+  if (phoneConn) { try { phoneConn.close(); } catch (e) { } phoneConn = null; }
+  if (phonePeer) { try { phonePeer.destroy(); } catch (e) { } phonePeer = null; }
 }
 
 function updateQrStatus(state, text) {
