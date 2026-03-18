@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign PDF</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bar">
+  <span class="title">Sign PDF</span>
+  <input type="file" id="fileInput" accept=".pdf">
+  <button onclick="fileInput.click()">Open PDF</button>
+  <button id="btnSig" disabled onclick="openSigPad()">Signature</button>
+  <button id="btnText" disabled onclick="addText()">Add Text</button>
+  <button id="btnDl" class="accent" disabled onclick="downloadPdf()">Download</button>
+</div>
+
+<div class="drop-zone" id="dropZone">
+  <div class="drop-box" id="dropBox">
+    <h2>Drop PDF here</h2>
+    <p>or click to browse</p>
+  </div>
+</div>
+
+<div id="workspace"></div>
+
+<!-- Signature modal -->
+<div class="modal-bg" id="sigModal">
+  <div class="modal">
+    <h3>Add signature</h3>
+    <div class="sig-tabs">
+      <button class="sig-tab active" data-tab="draw" onclick="switchSigTab('draw')">Draw</button>
+      <button class="sig-tab" data-tab="upload" onclick="switchSigTab('upload')">Upload</button>
+    </div>
+
+    <div class="tab-content active" id="tabDraw">
+      <div class="sig-draw-area">
+        <div class="placeholder" id="sigPlaceholder">Draw your signature here</div>
+        <canvas id="sigCanvas"></canvas>
+      </div>
+      <div class="color-row">
+        <span>Color:</span>
+        <div class="color-dot active" style="background:#222" onclick="setSigColor('#222',this)"></div>
+        <div class="color-dot" style="background:#e94560" onclick="setSigColor('#e94560',this)"></div>
+        <div class="color-dot" style="background:#2563eb" onclick="setSigColor('#2563eb',this)"></div>
+        <div class="color-dot" style="background:#16a34a" onclick="setSigColor('#16a34a',this)"></div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tabUpload">
+      <div class="sig-upload-area" id="sigUploadArea" onclick="document.getElementById('sigFileInput').click()">
+        <input type="file" id="sigFileInput" accept=".png,.jpg,.jpeg,.svg" style="display:none">
+        <div class="upload-btn">Upload signature</div>
+        <p>or drop a file here</p>
+        <div class="formats">Accepted: PNG, JPG, SVG</div>
+      </div>
+      <div class="sig-upload-preview" id="sigUploadPreview" style="display:none">
+        <img id="sigUploadImg">
+      </div>
+    </div>
+
+    <div class="saved-sigs" id="savedSigs"></div>
+
+    <div class="actions">
+      <button onclick="clearPad()">Clear</button>
+      <button onclick="closePad()">Cancel</button>
+      <button class="accent" onclick="useSig()">Use</button>
+    </div>
+  </div>
+</div>
+
+<!-- Text modal -->
+<div class="modal-bg" id="textModal">
+  <div class="modal">
+    <h3>Add text</h3>
+    <input type="text" id="textInput" class="text-input" placeholder="Type here..." onkeydown="if(event.key==='Enter')confirmText()">
+    <div class="actions">
+      <button onclick="closeTextModal()">Cancel</button>
+      <button class="accent" onclick="confirmText()">Place</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
