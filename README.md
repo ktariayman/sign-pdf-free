@@ -13,7 +13,7 @@ All data is stored in browser memory and is lost on refresh, except for the sign
 - **Save signatures** to localStorage for reuse
 - **Download** the signed PDF
 
-## Usage
+## Usage Local
 
 1. Open `index.html` in your browser
 2. Drop a PDF or click to browse
@@ -21,6 +21,9 @@ All data is stored in browser memory and is lost on refresh, except for the sign
 4. Drag to reposition, resize as needed
 5. Click **Download** to save the signed PDF
 
+## Usage App
+
+Link : https://sign-paper.netlify.app/
 ## Tech
 
 - [PDF.js](https://mozilla.github.io/pdf.js/) — PDF rendering
