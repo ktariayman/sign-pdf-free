@@ -117,11 +117,10 @@ function startPhonePeer() {
         localStorage.setItem('saved_signatures', JSON.stringify(sigs));
       }
 
-      // Enter placement mode (uses global from app.js)
-      placingSignature = msg.dataUrl;
-      document.body.style.cursor = 'crosshair';
-      closePad();
+      // Load onto draw canvas so user can preview/recolor, then click "Use"
       cleanupPhonePeer();
+      useSavedSig(msg.dataUrl);
+      showSavedSigs();
     });
 
     conn.on('close', () => {
