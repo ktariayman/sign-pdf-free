@@ -79,6 +79,12 @@ function switchSigTab(tab) {
   document.querySelectorAll('.sig-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
   document.getElementById('tabDraw').classList.toggle('active', tab === 'draw');
   document.getElementById('tabUpload').classList.toggle('active', tab === 'upload');
+  document.getElementById('tabPhone').classList.toggle('active', tab === 'phone');
+  if (tab === 'phone') {
+    openPhoneSign();
+  } else {
+    cleanupPhonePeer();
+  }
 }
 
 function openSigPad() {
@@ -132,7 +138,7 @@ function clearPad() {
   document.getElementById('sigPlaceholder').classList.remove('hidden');
 }
 
-function closePad() { document.getElementById('sigModal').classList.remove('on'); }
+function closePad() { document.getElementById('sigModal').classList.remove('on'); cleanupPhonePeer(); }
 
 // ---- Upload signature ----
 const sigUploadArea = document.getElementById('sigUploadArea');

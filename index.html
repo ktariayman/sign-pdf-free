@@ -7,6 +7,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Caveat&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -37,6 +39,7 @@
     <div class="sig-tabs">
       <button class="sig-tab active" data-tab="draw" onclick="switchSigTab('draw')">Draw</button>
       <button class="sig-tab" data-tab="upload" onclick="switchSigTab('upload')">Upload</button>
+      <button class="sig-tab" data-tab="phone" onclick="switchSigTab('phone')">&#128241; Phone</button>
     </div>
 
     <div class="tab-content active" id="tabDraw">
@@ -62,6 +65,21 @@
       </div>
       <div class="sig-upload-preview" id="sigUploadPreview" style="display:none">
         <img id="sigUploadImg">
+      </div>
+    </div>
+
+    <div class="tab-content" id="tabPhone">
+      <div class="qr-phone-tab">
+        <div class="qr-status" id="qrStatus">
+          <div class="qr-status-dot init"></div>
+          <span>Click to generate QR code</span>
+        </div>
+        <div class="qr-container" id="qrContainer"></div>
+        <p class="qr-instructions">Scan this QR code with your phone camera</p>
+        <div class="qr-waiting" id="qrWaiting" style="display:none">
+          <div class="qr-spinner"></div>
+          <span>Waiting for signature from phone...</span>
+        </div>
       </div>
     </div>
 
@@ -97,5 +115,6 @@
 </div>
 
 <script src="app.js"></script>
+<script src="phone-sign.js"></script>
 </body>
 </html>
